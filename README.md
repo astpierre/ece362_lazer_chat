@@ -1,6 +1,7 @@
 ## ece362_miniproj
 Purdue University ECE 362 Mini-Project. 
 # Saturday, April 14, 2018
+```C
 /* USER CODE BEGIN PFP */
 void transmitString(UART_HandleTypeDef *huart, char message[]);
 /* USER CODE END PFP */
@@ -33,7 +34,7 @@ void transmitString(UART_HandleTypeDef *huart, char message[])
     return;
 }
 /* USER CODE END 4 */
-
+ ```
 
 # Saturday, April 7, 2018
 1. welcome message and display animation
