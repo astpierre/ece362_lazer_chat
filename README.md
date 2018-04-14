@@ -1,5 +1,39 @@
 ## ece362_miniproj
 Purdue University ECE 362 Mini-Project. 
+# Saturday, April 14, 2018
+/* USER CODE BEGIN PFP */
+void transmitString(UART_HandleTypeDef *huart, char message[]);
+/* USER CODE END PFP */
+int main(void)
+{
+
+  /* USER CODE BEGIN 2 */
+  char txData[30] = "Hello world \r\n";
+
+  /* USER CODE END 2 */
+
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+
+  /* USER CODE END WHILE */
+
+  /* USER CODE BEGIN 3 */
+	  transmitString(&huart1, txData);
+	  HAL_Delay(500);
+  }
+  /* USER CODE END 3 */
+
+}
+
+/* USER CODE BEGIN 4 */
+void transmitString(UART_HandleTypeDef *huart, char message[])
+{
+    HAL_UART_Transmit(huart, (uint8_t *)message, strlen(message), 100);
+    return;
+}
+/* USER CODE END 4 */
+
 
 # Saturday, April 7, 2018
 1. welcome message and display animation
