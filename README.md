@@ -1,5 +1,7 @@
 ## ece362_miniproj
 Purdue University ECE 362 Mini-Project. 
+# Saturday, April 14, 2018
+Testing
 # Saturday, April 7, 2018
 1. welcome message and display animation
     - 'introduction()'
