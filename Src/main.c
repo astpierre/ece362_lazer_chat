@@ -47,14 +47,15 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 DMA_HandleTypeDef hdma_i2c1_rx;
+DMA_HandleTypeDef hdma_i2c1_tx;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#define MASTER_I2C //Uncomment if you want to use as MASTER DEVICE
-//#define SLAVE_I2C //Uncomment if you want to use as SLAVE DEVICE - NOT CURRENTLY WORKING
+//#define MASTER_I2C //Uncomment if you want to use as MASTER DEVICE
+#define SLAVE_I2C //Uncomment if you want to use as SLAVE DEVICE - NOT CURRENTLY WORKING
 
 unsigned char buffer[20] = "0";
 unsigned char bufferout[20] = "hellp\n";
@@ -72,6 +73,7 @@ static void MX_USART1_UART_Init(void);
 /* Private function prototypes -----------------------------------------------*/
 void transmitString(UART_HandleTypeDef *huart, char message[]);
 void receiveString();
+void clearString(char *, int);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -79,6 +81,8 @@ char rxData[30];
 char bufferIn[INPUTSIZE];
 char inputReceived[INPUTSIZE];
 char delete[] = " \b";
+char receive[22] = "Hello World\n";
+char transmit[22] = "transmitted\n";
 
 int txReady = 0;
 int arrayLoc = 0;
@@ -123,11 +127,7 @@ int main(void)
   //buffer[2] = 0x31;
   char txData[30] = "Hello \r\n";
   char TxPrompt[30] = "\nMessage to transfer:";
-
-  //HAL_I2C_Master_Transmit(&hi2c1,0x08<<1,buffer,20,100);
-  //HAL_I2C_Slave_Receive_DMA(&hi2c1,(uint8_t *)buffer,1);
-
-  HAL_UART_Receive_DMA(&huart1,(uint8_t *)rxData, 1); //begins the Receive UART DMA_circular
+  char newLine[] = "\n";
 
   /* USER CODE END 2 */
 
@@ -143,21 +143,40 @@ int main(void)
 #ifdef MASTER_I2C
 	  HAL_UART_Transmit(&huart1, (uint8_t *)TxPrompt, strlen(TxPrompt), 100); //Prompts for a user input using usart
 	  receiveString(); //Receives the user's input
-	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
 	  HAL_Delay(500);
 	  //HAL_UART_Transmit(&huart1, (uint8_t *)inputReceived, strlen(inputReceived), 100);
 	  HAL_I2C_Master_Transmit(&hi2c1,0x8<<1,inputReceived,strlen(inputReceived)+1,100); //Transmit's the user's input to the slave
 	  //HAL_I2C_Master_Transmit(&hi2c1,0x8<<1,bufferout,sizeof(bufferout)+1,100);
 	  HAL_Delay(200);
 	  HAL_I2C_Master_Receive(&hi2c1,0x8<<1,buffer,7,100); //Receive's whatever the slave has to tell the master.
-	  transmitString(&huart1, buffer); //transmits message with usart.
+	  transmitString(&huart1, buffer); //transmits the received message from slave to the masters serial
+
 #endif
 
 
 #ifdef SLAVE_I2C //currently NOT WORKING
-	  //HAL_I2C_Slave_Transmit(&hi2c1,bufferout,sizeof(bufferout)+1,100);
-	  HAL_Delay(100);
-	  transmitString(&huart1, buffer);
+	    while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) //Wait to make sure device is ready
+	    {
+	    }
+
+	    clearString(receive, sizeof(receive));
+
+	    if(HAL_I2C_Slave_Receive(&hi2c1, receive, 20,100) != HAL_OK) //receive any input from the Master
+	    {
+	     //ERROR
+	    }
+
+	    while(HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) //wait until the received data is complete
+	    {
+	    }
+
+	    if(HAL_I2C_Slave_Transmit_IT(&hi2c1, transmit, 20) != HAL_OK); //Transmit confirmation signal back to the Master
+	    	{
+	    	 //ERROR
+	    	}
+
+	    HAL_UART_Transmit(&huart1, (uint8_t *)receive, strlen(receive), 100); //Print the received signal to the UART
+	    HAL_UART_Transmit(&huart1, (uint8_t *)newLine, strlen(newLine), 100); //Print a new line
 
 #endif
   }
@@ -338,11 +357,10 @@ void transmitString(UART_HandleTypeDef *huart, char message[])
     return;
 }
 
-void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
+void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-  /* Turn LED6 on: Transfer in reception process is correct */
+  // Turn LED6 on: Transfer in reception process is correct
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
-	HAL_UART_Transmit(&huart1, (uint8_t *)bufferout, strlen(bufferout), 100);
 }
 
 void receiveString()
@@ -355,7 +373,7 @@ void receiveString()
     return;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) //this function handles all of the data that is input by the user
 {
 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
   int i = 0;
@@ -387,6 +405,12 @@ HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
           for (i = 0; i < INPUTSIZE; i++) bufferIn[i] = 0; // clear buffer
       }
   }
+}
+
+void clearString(char * string, int size)  //This function is used to clear a string
+{
+	int i = 0;
+    for (i = 0; i < size; i++) string[i] = 0; // clear buffer
 }
 
 /* USER CODE END 4 */
