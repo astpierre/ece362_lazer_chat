@@ -1,5 +1,4 @@
-Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.o: \
- ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.c \
+Src/stm32f0xx_it.o: ../Src/stm32f0xx_it.c \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Inc/stm32f0xx_hal_conf.h \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Inc/main.h \
@@ -25,7 +24,8 @@ Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.o: \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h \
- /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h
+ /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h \
+ /Users/khunckler/eclipse-workspace/miniProj_I2C/Inc/stm32f0xx_it.h
 
 /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:
 
@@ -78,3 +78,5 @@ Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.o: \
 /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h:
 
 /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h:
+
+/Users/khunckler/eclipse-workspace/miniProj_I2C/Inc/stm32f0xx_it.h:

@@ -1,5 +1,4 @@
-Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.o: \
- ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.c \
+Src/stm32f0xx_hal_msp.o: ../Src/stm32f0xx_hal_msp.c \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Inc/stm32f0xx_hal_conf.h \
  /Users/khunckler/eclipse-workspace/miniProj_I2C/Inc/main.h \

@@ -63,7 +63,7 @@ Drivers/STM32F0xx_HAL_Driver/Src/%.o: ../Drivers/STM32F0xx_HAL_Driver/Src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: MCU GCC Compiler'
 	@echo $(PWD)
-	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft '-D__weak=__attribute__((weak))' '-D__packed=__attribute__((__packed__))' -DUSE_HAL_DRIVER -DSTM32F051x8 -I"W:/ecn.data/Personal/SystemWorkbench2.3/laser_proj/Inc" -I"W:/ecn.data/Personal/SystemWorkbench2.3/laser_proj/Drivers/STM32F0xx_HAL_Driver/Inc" -I"W:/ecn.data/Personal/SystemWorkbench2.3/laser_proj/Drivers/STM32F0xx_HAL_Driver/Inc/Legacy" -I"W:/ecn.data/Personal/SystemWorkbench2.3/laser_proj/Drivers/CMSIS/Device/ST/STM32F0xx/Include" -I"W:/ecn.data/Personal/SystemWorkbench2.3/laser_proj/Drivers/CMSIS/Include"  -Og -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
+	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft '-D__weak=__attribute__((weak))' '-D__packed="__attribute__((__packed__))"' -DUSE_HAL_DRIVER -DSTM32F051x8 -I"/Users/khunckler/eclipse-workspace/miniProj_I2C/Inc" -I"/Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc" -I"/Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/STM32F0xx_HAL_Driver/Inc/Legacy" -I"/Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/CMSIS/Device/ST/STM32F0xx/Include" -I"/Users/khunckler/eclipse-workspace/miniProj_I2C/Drivers/CMSIS/Include"  -Og -g3 -Wall -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
