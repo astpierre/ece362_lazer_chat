@@ -36,12 +36,16 @@
 #include "stm32f0xx_it.h"
 
 /* USER CODE BEGIN 0 */
-extern int tim2_flag;//interrupt flag
+extern int tim2_flag;//interrupt flag (interrupt/5ms)
+extern int adc_reading;//interrupt adc value (read/5ms)
+int c1 = 0;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern ADC_HandleTypeDef hadc;
 extern TIM_HandleTypeDef htim2;
 extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
 
 /******************************************************************************/
 /*            Cortex-M0 Processor Interruption and Exception Handlers         */ 
@@ -70,12 +74,37 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+* @brief This function handles ADC and COMP interrupts (COMP interrupts through EXTI lines 21 and 22).
+*/
+void ADC1_COMP_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC1_COMP_IRQn 0 */
+
+  /* USER CODE END ADC1_COMP_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc);
+  /* USER CODE BEGIN ADC1_COMP_IRQn 1 */
+
+  /* USER CODE END ADC1_COMP_IRQn 1 */
+}
+
+/**
 * @brief This function handles TIM2 global interrupt.
 */
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-   tim2_flag = 1;
+	  tim2_flag=1;//set the flag
+	  //BELOW IS AN ADC FUNCTION TO CONFIRM LASER CONNECTION
+	  if (c1 == 5)
+	  {
+		  HAL_ADC_Start(&hadc);//start ADC
+		  HAL_ADC_ConvCpltCallback(&hadc);//wait for conversion
+		  adc_reading = HAL_ADC_GetValue(&hadc);//grab value from DR
+		  c1 = 0;//reset counter
+		  HAL_ADC_IRQHandler(&hadc);//clear the flag
+	  }
+	  else c1 = c1 +1;//increment ADC flag counter
+
   /* USER CODE END TIM2_IRQn 0 */
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
@@ -95,6 +124,20 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+* @brief This function handles USART2 global interrupt.
+*/
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+  /* USER CODE END USART2_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

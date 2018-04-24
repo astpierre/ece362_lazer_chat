@@ -28,13 +28,13 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: laser_proj.elf
+all: beam_me_up.elf
 
 # Tool invocations
-laser_proj.elf: $(OBJS) $(USER_OBJS) ../STM32F051R8Tx_FLASH.ld
+beam_me_up.elf: $(OBJS) $(USER_OBJS) ../STM32F051R8Tx_FLASH.ld
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU GCC Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -specs=nosys.specs -specs=nano.specs -T"../STM32F051R8Tx_FLASH.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "laser_proj.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
+	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -specs=nosys.specs -specs=nano.specs -T"../STM32F051R8Tx_FLASH.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "beam_me_up.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build
@@ -46,8 +46,8 @@ clean:
 
 post-build:
 	-@echo 'Generating binary and Printing size information:'
-	arm-none-eabi-objcopy -O binary "laser_proj.elf" "laser_proj.bin"
-	arm-none-eabi-size "laser_proj.elf"
+	arm-none-eabi-objcopy -O binary "beam_me_up.elf" "beam_me_up.bin"
+	arm-none-eabi-size "beam_me_up.elf"
 	-@echo ' '
 
 .PHONY: all clean dependents

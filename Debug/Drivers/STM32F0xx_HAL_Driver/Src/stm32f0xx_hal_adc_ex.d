@@ -1,5 +1,5 @@
-Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.o: \
- ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.c \
+Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_adc_ex.o: \
+ ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_adc_ex.c \
  W:/ecn.data/Personal/SystemWorkbench2.3/beam_me_up/Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h \
  W:/ecn.data/Personal/SystemWorkbench2.3/beam_me_up/Inc/stm32f0xx_hal_conf.h \
  W:/ecn.data/Personal/SystemWorkbench2.3/beam_me_up/Inc/main.h \

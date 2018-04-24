@@ -39,19 +39,42 @@
 #include "main.h"
 #include "stm32f0xx_hal.h"
 
+
 /* USER CODE BEGIN Includes */
-#include <stdio.h>//some basic C libraries
+#include <stdio.h>//basic C libraries
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc;
+
 TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+//TIMER
 int tim2_flag;//interrupt flag
-int count =0;//counter int
+int count =1;//counter int
+int flagga = 0;
+
+//USART
+char Rx_indx1, Rx_data1[2], Rx_Buffer1[100];
+char Rx_indx2, Rx_data2[2], Rx_Buffer2[100];
+char inputReceived[100];
+char messageReceived[100];
+int flag_uart;
+
+//UI
+int state = 0;//state machine val
+int new_message = 0;
+
+//ADC
+int adc_reading = 0;
+
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,21 +82,121 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_ADC_Init(void);
+static void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+void transmitString(UART_HandleTypeDef *huart, char message[]);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+void receiveString();
+void new_line();
+void clearString(char *string, int size);
+void open_prompt();
+
 
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+// MY FUNCTIONS
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)//Interrupt callback routine
+{
+	//this callback routine allows the user to parse their data and submit it using a the ENTER key
+	//assigns each bit of Rx_data to a char the user input
+    uint8_t i;
+    uint8_t j;
+    if (huart->Instance == USART1)  //current UART
+        {
+        if (Rx_indx1==0) {for (i=0;i<100;i++) Rx_Buffer1[i]=0;}   //clear Rx_Buffer before receiving new data
 
+        if (Rx_data1[0]!=13) //if received data different from ascii 13 (enter)
+            {
+            Rx_Buffer1[Rx_indx1++]=Rx_data1[0];    //add data to Rx_Buffer
+            }
+        else //if received data = 13 (a.k.a. ENTER)
+            {
+        	flag_uart = 1;//transfer complete, data is ready to read
+        	strcpy(inputReceived, Rx_Buffer1);//copy the string for use outside the function
+        	Rx_Buffer1[Rx_indx1] = 0;//begin clearing buffer
+        	Rx_indx1=0;
+			for (i = 0; i < 100; i++) Rx_Buffer1[i] = 0;// clear buffer
+            }
+        HAL_UART_Receive_IT(&huart1, Rx_data1, 1);   //activate UART receive interrupt every time
+        }
+    else if (huart->Instance == USART2)  //current UART
+		{
+    	if (Rx_indx2==0) {for (j=0;j<100;j++) Rx_Buffer2[j]=0;}   //clear Rx_Buffer before receiving new data
+
+		if (Rx_data2[0]!='\0') //if received data different from ascii 13 (enter)
+			{
+			Rx_Buffer2[Rx_indx2++]=Rx_data2[0];    //add data to Rx_Buffer
+			}
+		else
+		{
+			//new_message = 1;//transfer complete, data is ready to read
+			//Rx_Buffer[Rx_indx++]=Rx_data[0];
+			strcpy(messageReceived, Rx_Buffer2); //copy the string for use outside the function
+			Rx_Buffer2[Rx_indx2] = 0; //begin clearing buffer
+			Rx_indx2=0;
+			for (j = 0; j < 100; j++) Rx_Buffer2[j] = 0; // clear buffer
+			}
+		HAL_UART_Receive_IT(&huart2, Rx_data2, 1);   //activate UART receive interrupt every time
+		}
+}
+void transmitString(UART_HandleTypeDef *huart, char* message)
+{
+	/*
+	 * This function takes a string of characters and transmits it via Tx of the STM32F0.
+	 * 	- Tx of STM32F0 is connected to the laser diode
+	 */
+	char buffer[100];											//array for the string
+	int tmp;													//length of transmission
+	tmp = sprintf(buffer,message);								//format string
+    HAL_UART_Transmit(huart, (uint8_t *)message, tmp, 1000);	//display on serial port
+    return;
+}
+void new_line()
+{
+	char blank_line[100];										//array for a blank line
+	int tmp;													//length of transmission
+    tmp=sprintf(blank_line,"\n");								//format new line
+    HAL_UART_Transmit(&huart1, blank_line, tmp, 1000);			//display on serial port
+    return;
+}
+
+
+void receiveString()
+{
+    while(flag_uart == 0)
+    {
+    	if (flagga==1)
+    	{
+    		flagga=0;
+    		break;
+    	}
+    }
+    flag_uart = 0;
+    return;
+}
+void clearString(char *string, int size)  //This function is used to clear a string
+{
+	int i = 0;
+    for (i = 0; i < size; i++) string[i] = 0; // clear buffer
+}
+void open_prompt()
+{
+	char txPromp[100] = 	"  You: ";
+	new_line();//new line for home-screen
+	transmitString(&huart1,txPromp);//local
+	return;
+}
 /* USER CODE END 0 */
 
 int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-   int tog=0;//LED toggler int
+	int config_flag = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -96,40 +219,138 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_TIM2_Init();
+  MX_ADC_Init();
+  MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim2);//start timer 2 w/ interupts
+  HAL_UART_Receive_IT(&huart1, Rx_data1, 1);//activate UART Rx  w/ interrupts
+  HAL_ADC_Start_IT(&hadc);//enable the ADC w/ interrupts
+  HAL_TIM_Base_Start_IT(&htim2);//start the timer
+  HAL_UART_Receive_IT(&huart2, Rx_data2, 1);//activate laser
+
+  //create some text strings to display on the serial interface
+  char txSTARZ[100] =   "******************************************************************************* \r\n";
+  char txGreet[100]  =  "**************************Hi User, welcome to LazerCom!************************ \r\n";
+  char txReady[100]  =  "***** Press any key to begin. *************************************************";
+  char txCalib0[100] =  "***** CALIBRATING... ********************************************************** \r\n";
+  char txCalib1[100] =  "***** CALIBRATION COMPLETE. *************************************************** \r\n";
+  char txInstr[100] =   "***** Instructions: to send a message, hit ENTER. For help type (h) *********** \r\n";
+  char txPromp[100] = 	"  You: ";
+  char txERROR[100] = 	"************************ERROR - RECALIBRATION REQUIRED.************************ \r\n";
+  char my_msg[100]  =   "  Friend: ";
+
+  char temp[100];
+  char temp1[100];
+  volatile int len1 = 0;
+  volatile int len = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if (tim2_flag==1)//interrupt
-	    {
-	 	   tim2_flag=0;//clear flag
-	 	   //count up to num => toggle led driven by GPIOC_pin7
-	 	   if (count == 20)
-	 	   {
-	 		   count = 0;//reset counter
-	 		   //toggle GPIO LED
-	 		   if (tog == 1)
-	 		   {
-	 			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_7,GPIO_PIN_RESET);//VALUE --> PLD or MOSFET
-	 			  tog = 0;
-	 		   }
-	 		   else if (tog==0)
-	 		   {
-	 			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_7,GPIO_PIN_SET);//VALUE --> PLD or MOSFET
-	 			  tog = 1;
-	 		   }
+	  	//STATE MACHINE
+		if (state == 0)//turn key funtionality
+		{
+		  transmitString(&huart1,txSTARZ);//local
+		  transmitString(&huart1,txGreet);//local
+		  transmitString(&huart1,txSTARZ);//local
+		  transmitString(&huart1,txReady);//local
+		  receiveString();//wait for key press
+		  new_line();
+		  transmitString(&huart1,txSTARZ);//local
+		  transmitString(&huart1,txCalib0);//local
+		  state =1;
+		}
+		else if (state == 1)//initialize laser
+		{
+		  if (adc_reading >= 2000)
+		  {
+			transmitString(&huart1,txCalib1);//local
+			transmitString(&huart1,txSTARZ);//local
+			state = 2;
+		  }
+		  else
+		  {
+			transmitString(&huart1,txCalib0);//local
+			transmitString(&huart1,txSTARZ);//local
+			HAL_Delay(750);
+			state = 1;
+		  }
+		}
+		else if (state == 2)//start chat
+		{
+			transmitString(&huart1,txSTARZ);//local
+			transmitString(&huart1,txInstr);//local
+			transmitString(&huart1,txSTARZ);//local
+			transmitString(&huart1,txPromp);//local
+			//transmitString(&huart2,"\n");//away
+			receiveString();//wait for key press
+			state =3;
+		}
+		else if (state == 3)//start chat
+		{
+			open_prompt();
+			state =4;
+		}
+		if (flag_uart==1)
+		{
+			flag_uart = 0;
+			//for sending a formatted message
+			strcat(temp,my_msg);//formatting
+			strcat(temp,inputReceived);//formatting
+			strcat(temp,"\n");//formatting
+			transmitString(&huart1,temp);//send via laser
 
-	 	   }
-	 	   else
-	 	   {
-	 		  count = count+1;
-	 	   }
-	    }
+			len = strlen(temp);//get length for clearing
+			clearString(temp,len);//clear buffer
+			len = strlen(inputReceived);//get length for clearing
+			clearString(inputReceived,len);//clear buffer
+
+			open_prompt();
+		}
+		/*
+		if (new_message==1)
+		{
+			new_message = 0;
+			//for sending a formatted message
+			strcat(temp1,my_msg);//formatting
+			strcat(temp1,messageReceived);//formatting
+			strcat(temp1,"\n");//formatting
+			transmitString(&huart1,temp1);//send via laser
+
+			len1 = strlen(temp1);//get length for clearing
+			clearString(temp1,len1);//clear buffer
+			len1 = strlen(messageReceived);//get length for clearing
+			clearString(messageReceived,len1);//clear buffer
+
+			open_prompt();
+		}*/
+
+		if (tim2_flag==1)//interrupt driven
+		{
+		  tim2_flag=0;//clear flag
+		  if (count == 20)//about a half second (may need to change this #)
+		  {
+			count = 0;//reset counter to 0
+
+			//USART_puts(USART1, "Init complete! Hello World!\r\n");
+		//	USART_puts(USART2, "Init complete! Hello World!\r\n");
+
+			if (adc_reading <= 2000)//if laser was on photodiode, 2000 was easily broken
+			{
+			  HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_7);//toggle the red led
+			  config_flag = 1;
+			}
+			else if (adc_reading >= 1999)//photodiode connected to laser
+			{
+			  HAL_GPIO_WritePin(GPIOC,GPIO_PIN_7,GPIO_PIN_SET);//set red led to ON
+			  config_flag = 0;
+			}
+		  }
+		  else count = count+1;//increment timer
+	   }
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
@@ -194,6 +415,45 @@ void SystemClock_Config(void)
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
+/* ADC init function */
+static void MX_ADC_Init(void)
+{
+
+  ADC_ChannelConfTypeDef sConfig;
+
+    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
+    */
+  hadc.Instance = ADC1;
+  hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
+  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc.Init.LowPowerAutoWait = DISABLE;
+  hadc.Init.LowPowerAutoPowerOff = DISABLE;
+  hadc.Init.ContinuousConvMode = DISABLE;
+  hadc.Init.DiscontinuousConvMode = DISABLE;
+  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc.Init.DMAContinuousRequests = DISABLE;
+  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  if (HAL_ADC_Init(&hadc) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+    /**Configure for the selected ADC regular channel to be converted. 
+    */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
 /* TIM2 init function */
 static void MX_TIM2_Init(void)
 {
@@ -204,7 +464,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 48000;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4;
+  htim2.Init.Period = 49;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -232,7 +492,7 @@ static void MX_USART1_UART_Init(void)
 {
 
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 9600;
+  huart1.Init.BaudRate = 1600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -242,6 +502,27 @@ static void MX_USART1_UART_Init(void)
   huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
   if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+}
+
+/* USART2 init function */
+static void MX_USART2_UART_Init(void)
+{
+
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 1600;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -265,23 +546,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7|LD4_Pin|LD3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PC7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : LD4_Pin LD3_Pin */
-  GPIO_InitStruct.Pin = LD4_Pin|LD3_Pin;
+  /*Configure GPIO pins : PC7 PC8 PC9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
