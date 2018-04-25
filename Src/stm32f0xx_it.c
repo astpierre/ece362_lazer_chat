@@ -93,18 +93,17 @@ void ADC1_COMP_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-	  tim2_flag=1;//set the flag
-	  //BELOW IS AN ADC FUNCTION TO CONFIRM LASER CONNECTION
-	  if (c1 == 5)
-	  {
-		  HAL_ADC_Start(&hadc);//start ADC
-		  HAL_ADC_ConvCpltCallback(&hadc);//wait for conversion
-		  adc_reading = HAL_ADC_GetValue(&hadc);//grab value from DR
-		  c1 = 0;//reset counter
-		  HAL_ADC_IRQHandler(&hadc);//clear the flag
-	  }
-	  else c1 = c1 +1;//increment ADC flag counter
-
+  tim2_flag=1;//set the flag
+  //BELOW IS AN ADC FUNCTION TO CONFIRM LASER CONNECTION
+  if (c1 == 5)
+  {
+	  HAL_ADC_Start(&hadc);//start ADC
+	  HAL_ADC_ConvCpltCallback(&hadc);//wait for conversion
+	  adc_reading = HAL_ADC_GetValue(&hadc);//grab value from DR
+	  c1 = 0;//reset counter
+	  HAL_ADC_IRQHandler(&hadc);//clear the flag
+  }
+  else c1 = c1 +1;//increment ADC flag counter
   /* USER CODE END TIM2_IRQn 0 */
   HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
