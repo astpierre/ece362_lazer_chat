@@ -222,17 +222,26 @@ int main(void)
     HAL_UART_Receive_IT(&huart2, Rx_data2, 1);	//activate laser
     //user interface strings
     char txSTARZ[100]  =   "******************************************************************************* \r\n";
-    char txGreet[100]  =   "**************************Hi User, welcome to LazerCom!************************ \r\n";
+    char txGreet[100]  =   "*************************Hi User, welcome to Lazer-Chat!*********************** \r\n";
     char txReady[100]  =   "***** Press any key to begin. *************************************************";
+    char txUname[100]  =   "***** Please enter your name: ";
     char txCalib0[100] =   "***** CALIBRATING... ********************************************************** \r\n";
     char txCalib1[100] =   "***** CALIBRATION COMPLETE. *************************************************** \r\n";
-    char txInstr[100]  =   "***** Instructions: to send a message, hit ENTER. For help type (h) *********** \r\n";
-    char txPromp[100]  =   "  You: ";
-    char txMsg[100]    =   "  Friend: ";
+    char txInstr[100]  =   "***** Instructions: to send a message, hit ENTER. For more info type (h) ****** \r\n";
     char txERROR[100]  =   "************************ERROR - RECALIBRATION REQUIRED.************************ \r\n";
+    char txHelp1[100]  =   "********************* Welcome to our ECE362 Mini-Project. ********************* \r\n";
+    char txHelp2[100]  =   "***** Team Members: *********************************************************** \r\n";
+    char txHelp3[100]  =   "******** Bradford Thorne ****************************************************** \r\n";
+    char txHelp4[100]  =   "******** Kevin Hunckler ******************************************************* \r\n";
+    char txHelp5[100]  =   "******** Sahil Bhalla ********************************************************* \r\n";
+    char txHelp6[100]  =   "******** Andrew St. Pierre **************************************************** \r\n";
+    //char txHelp6[100]  =   "******************************************************************************* \r\n";
+    char name[100];
     char temp[100];
     char blank[100]= "\n";
+    char padding[100]= "  ";
     int len;
+    int starting = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -249,47 +258,81 @@ int main(void)
 		  receiveString();						//wait for key press
 		  new_line();
 		  transmitString(&huart1,txSTARZ);
-		  transmitString(&huart1,txCalib0);
+
 		  state =1;								//advance state
 		}
-		else if (state == 1)					//configure laser
+		else if (state==1)						//get user's name
 		{
+			transmitString(&huart1,txUname);	//prompt for user's name
+			receiveString();					//wait until name entered
+			new_line();							//new line formatting
+			strcpy(name,padding);				//pad w/ two spaced
+			strcat(name,inputReceived);			//add user name to variable
+			strcat(name,": ");					//formatting new line
+			len = strlen(inputReceived);		//get length for clearing
+			clearString(inputReceived,len);		//clear buffer
+			state = 2;
+		}
+		else if (state == 2)					//configure laser
+		{
+			transmitString(&huart1,txCalib0);
 		  if (adc_reading >= 2000)				//check for good laser-photodiode connection
 		  {
 			transmitString(&huart1,txCalib1);
 			transmitString(&huart1,txSTARZ);
-			state = 2;							//advance state
+			state = 3;							//advance state
 		  }
 		  else
 		  {
 			transmitString(&huart1,txCalib0);
 			transmitString(&huart1,txSTARZ);
 			HAL_Delay(750);
-			state = 1;							//retain state
+			state = 2;							//retain state
 		  }
 		}
-		else if (state == 2)					//initialize chat
+		else if (state == 3)					//initialize chat
 		{
 			transmitString(&huart1,txSTARZ);
 			transmitString(&huart1,txInstr);
 			transmitString(&huart1,txSTARZ);
+			while (adc_reading <= 2000)
+			{}									//wait for good connection to begin chat
 			transmitString(&huart2,blank);
-			transmitString(&huart1,blank);
 			HAL_Delay(200);
-			state =3;
+			state =5;
 		}
-		else if (state == 3)					//begin chat
+		else if (state==4)						//begin chat
 		{
 			open_prompt();
-			state = 4;
+			state = 5;
 		}
-		else if (state == 4)
+		else if (state == 5)
 		{
 			//user enters a message
 			if (flag_uart==1)
 			{
-				flag_uart = 0;					//clear flag
-				strcpy(temp,txMsg);				//store in temp
+
+				flag_uart = 0;							//clear flag
+
+				//check for help
+				if ((inputReceived[0]==104) && (inputReceived[1]==00))	//char 'h' ascII value
+				{
+					transmitString(&huart1,txSTARZ);
+					transmitString(&huart1,txHelp1);
+					transmitString(&huart1,txSTARZ);
+					transmitString(&huart1,txHelp2);
+					transmitString(&huart1,txHelp3);
+					transmitString(&huart1,txHelp4);
+					transmitString(&huart1,txHelp5);
+					transmitString(&huart1,txHelp6);
+					transmitString(&huart1,txSTARZ);
+					len = strlen(inputReceived);		//get length for clearing
+					clearString(inputReceived,len);		//clear buffer
+					state = 4;							//prompt for input again
+				}
+				else
+				{
+				strcpy(temp,name);				//store in temp
 				strcat(temp,inputReceived);		//add user message
 				strcat(temp,"\n");				//formatting new line
 				transmitString(&huart2,temp);	//send via laser
@@ -298,7 +341,8 @@ int main(void)
 				clearString(inputReceived,len);	//clear buffer
 				len = strlen(temp);				//get length for clearing
 				clearString(temp,len);			//clear buffer
-				state = 3;						//repeat state 3
+				state = 4;						//repeat state 3
+				}
 			}
 			//user receives a message
 			else if (flag_message == 1)
@@ -312,9 +356,16 @@ int main(void)
 				clearString(messageReceived,len);//clear buffer
 				len = strlen(temp);				//get length for clearing
 				clearString(temp,len);			//clear buffer
-				state = 3;						//repeat state 3
+				state = 4;						//repeat state 3
 			}
-			else state = 4;
+			else state = 5;
+		}
+		if (config_flag==1)
+		{
+			config_flag=0;
+			new_line();
+			transmitString(&huart1,txERROR);	//print error
+			state = 2; 							//wait for adc_reading to return to high val
 		}
 		if (tim2_flag==1)						//interrupt driven
 		{
