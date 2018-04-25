@@ -1,4 +1,4 @@
-LAZER-MESSENGER 1.0:
+
 Lazer-Messenger is completely turn-key and and functional on both ends.
 `HAL_UART_RxCpltCallback` successfully receives data from the laser diode.
 ```C
