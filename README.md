@@ -1,15 +1,18 @@
 ## Welcome to lazer-chat!
-This is our end of semester project where we used 2 low-power lasers, 2 photodiodes, 2 STM32F0's and creates a simple commmunication network.
-Check out our software diagram and state machine design below.
-
+This is our end of semester project where we used 2 low-power lasers, 2 photodiodes, and 2 STM32F0's to create a simple commmunication network via lazer. Check out our software diagram and state machine designs below.
+#
 State Machine: 
 ![alt text][sm]
 
 [sm]: https://github.com/astpierre/ece362_lazer_chat/blob/lazer-messenger-master/state_machine.png "Lazer-Chat State Machine"
+#
+SW Diagram: 
+![alt text][sd]
 
+[sd]: https://github.com/astpierre/ece362_lazer_chat/blob/lazer-messenger-master/software_diagram.png "Lazer-Chat Software Diagram"
 ## Purdue University ECE 362 Mini-Projec
-# Team members include: 
+# Team members include:
+- Andrew St. Pierre
 - Bradford Hawthorne
 - Kevin Hunckler
 - Sahil Bhalla
-- Andrew St. Pierre
